@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404,redirect,render
+from django.http import JsonResponse
 from .forms import *
 from .models import Tweet
 from django.contrib.auth.decorators import *
@@ -59,3 +60,17 @@ def register(request):
     else:
         form = UserRegisterationform()
     return render(request,'registration/register.html',{'form':form})
+
+
+def search_dropdown(request):
+    query = request.GET.get('q', '')
+    if query:
+        results = Tweet.objects.filter(text__icontains=query)[:10] 
+        results_list = [{'id': tweet.id, 'text': tweet.text[:50]} for tweet in results]  
+    else:
+        results_list = []
+
+    return JsonResponse(results_list, safe=False)
+def tweet_detail(request, tweet_id):
+    tweet = get_object_or_404(Tweet, id=tweet_id)
+    return render(request, 'tweet_detail.html', {'tweet': tweet})

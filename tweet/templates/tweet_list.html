@@ -9,7 +9,10 @@ All TWEETS
 {% block content %}
 
 <h1 class='text-center mt-4'>
+
+    {% if user.is_authenticated%}
     Hello {{user}}, Welcome to tweets
+    {% endif %}
 </h1>
 <a class="btn btn-primary" href="{% url 'tweet_create' %}"> New Tweet </a>
 <div class="container row gap-3 mt-4">

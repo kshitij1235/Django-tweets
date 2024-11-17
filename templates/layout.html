@@ -5,48 +5,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        {% block title %}
-            TWEETS
-        {% endblock %}
-    </title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <title>{% block title %}TWEETS{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="bg-dark">
-
-  <nav class="navbar bg-body-tertiary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'tweet_list' %}">TWEETS</a>
-
-        <!-- Search Form -->
-        <form class="d-flex" role="search" method="get" >
-            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="q">
-            <button class="btn btn-outline-success" type="submit">Search</button>
-        </form>
-
-        <!-- Authentication Links or Logout -->
-        <div class="d-flex">
-            {% if user.is_authenticated %}
-                <form method="post" action="{% url 'logout' %}" class="px-4"> 
-                    {% csrf_token %}
-                    <button class="btn btn-danger mx-2" type="submit">Logout</button>
-                </form>
-            {% else %}
-                <a class="btn btn-primary mx-2" href="{% url 'login' %}">Login</a>
-                <a class="btn btn-primary mx-2" href="{% url 'register' %}">Register</a>
-            {% endif %}
-        </div>
-    </div>
-</nav>
-
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <!-- Brand logo -->
+            <a class="navbar-brand" href="{% url 'tweet_list' %}">TWEETS</a>
     
+            <!-- Search form -->
+            <form class="d-flex justify-content-end position-relative flex-column" role="search" id="search-form">
+                <input 
+                    class="form-control mb-2 w-auto"  
+                    type="search" 
+                    placeholder="Search Tweets" 
+                    aria-label="Search" 
+                    name="q" 
+                    id="search-input"
+                >
+                <div 
+                    id="search-results" 
+                    class="dropdown-menu shadow w-50" 
+                    style="display: none; position: absolute; z-index: 1000;">
+                </div>
+            </form>
+            
+            <style>
+                #search-results {
+                    top: calc(100% + 5px);
+                    max-height: 300px;
+                    overflow-y: hidden;
+                    width: 100%; /* Ensure dropdown spans the width of its container */
+                }
+                #search-results .dropdown-item {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;  <!-- Apply ellipsis for long text -->
+                    max-width: 250px;  <!-- Set max width for each item to avoid them being too wide -->
+                }
+            </style>
+            
+    
+            <!-- Login/Logout buttons -->
+            <div class="d-flex">
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'logout' %}" class="px-4">
+                        {% csrf_token %}
+                        <button class="btn btn-danger mx-2" type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-primary mx-2" href="{% url 'login' %}">Login</a>
+                    <a class="btn btn-primary mx-2" href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    
+   
+    </nav>
+    
+    
+
     <div class="container">
-        {% block content %} {% endblock %}
+        {% block content %}{% endblock %}
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-qQDRJ3zm/Q+Y9CbnLl/8cvTh8ywTzXtHAKuFOztL3tg+lk3HX4ZbT39F08egM3hn" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function () {
+            $('#search-input').on('input', function () {
+                let query = $(this).val();
+                if (query.length > 1) {
+                    $.ajax({
+                        url: "{% url 'search_dropdown' %}",
+                        data: { q: query },
+                        success: function (data) {
+                            let dropdown = $('#search-results');
+                            dropdown.empty();
+                            if (data.length > 0) {
+                                data.forEach(item => {
+                                    dropdown.append(`<a href="/tweet/${item.id}/" class="dropdown-item">${item.text}</a>`);
+                                });
+                                dropdown.show();
+                            } else {
+                                dropdown.hide();
+                            }
+                        },
+                        error: function () {
+                            console.error("Failed to fetch search results.");
+                        }
+                    });
+                } else {
+                    $('#search-results').hide();
+                }
+            });
+
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#search-form').length) {
+                    $('#search-results').hide();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
